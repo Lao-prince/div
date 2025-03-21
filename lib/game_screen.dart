@@ -200,7 +200,13 @@ class _GameScreenState extends State<GameScreen> {
       }
 
       score += totalScore;
-      _generateNewNumber();
+      
+      // Проверяем окончание игры после всех изменений
+      if (_isGameOver()) {
+        _handleGameOver();
+      } else {
+        _generateNewNumber();
+      }
     });
   }
 
@@ -235,6 +241,9 @@ class _GameScreenState extends State<GameScreen> {
   void _handleGameOver() {
     if (!_resultSaved) {
       _resultSaved = true;
+      setState(() {
+        currentNumber = null;
+      });
       _saveResult(score);
     }
   }
@@ -318,11 +327,6 @@ class _GameScreenState extends State<GameScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final availableWidth = screenWidth - 32;
     final cellSize = (availableWidth - 32) / gridSize;
-
-    final isGameOver = _isGameOver();
-    if (isGameOver) {
-      _handleGameOver();
-    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8EF),
@@ -460,49 +464,20 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              if (currentNumber != null && !isGameOver)
-                GameSettings.gameMode == GameMode.dragAndDrop
-                  ? DraggableNumber(
-                      number: currentNumber!,
-                      onDragStarted: () => setState(() => isDragging = true),
-                      onDragEnd: () => setState(() => isDragging = false),
-                    )
-                  : Container(
-                      width: 72,
-                      height: 72,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8F7A66),
-                        borderRadius: BorderRadius.circular(6),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 3,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            currentNumber.toString(),
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-              if (isGameOver)
+              if (_isGameOver())
                 Container(
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFBBADA0),
                     borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -544,6 +519,42 @@ class _GameScreenState extends State<GameScreen> {
                     ],
                   ),
                 ),
+              if (currentNumber != null && !_isGameOver())
+                GameSettings.gameMode == GameMode.dragAndDrop
+                  ? DraggableNumber(
+                      number: currentNumber!,
+                      onDragStarted: () => setState(() => isDragging = true),
+                      onDragEnd: () => setState(() => isDragging = false),
+                    )
+                  : Container(
+                      width: 72,
+                      height: 72,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8F7A66),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 3,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            currentNumber.toString(),
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
               const SizedBox(height: 20),
             ],
           ),
