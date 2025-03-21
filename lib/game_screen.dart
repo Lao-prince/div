@@ -18,7 +18,7 @@ class _GameScreenState extends State<GameScreen> {
   static const String _resultsKey = 'game_results';
   static const int _maxStoredResults = 10;
   
-  static const int gridSize = 3;
+  static const int gridSize = 4;
   late List<List<int?>> grid;
   int? currentNumber;
   int score = 0;
@@ -26,6 +26,9 @@ class _GameScreenState extends State<GameScreen> {
   final Random _random = Random();
   List<GameResult> previousResults = [];
   bool _resultSaved = false;
+  
+  int _comboMultiplier = 1;
+  int _lastMoveTime = 0;
 
   @override
   void initState() {
@@ -65,6 +68,8 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _generateNewNumber() {
+    if (_isGameOver() || currentNumber != null) return;
+
     List<int> existingNumbers = [];
     for (var row in grid) {
       for (var cell in row) {
@@ -74,46 +79,68 @@ class _GameScreenState extends State<GameScreen> {
       }
     }
 
-    setState(() {
-      if (existingNumbers.isEmpty) {
-        // Для первого числа используем простое число или его небольшое произведение
-        if (_random.nextBool()) {
-          currentNumber = _random.nextInt(9) * 2 + 2;
-        } else {
-          currentNumber = (_random.nextInt(3) + 2) * (_random.nextInt(3) + 2);
-        }
+    int newNumber;
+    if (existingNumbers.isEmpty) {
+      if (_random.nextBool()) {
+        newNumber = _random.nextInt(9) * 2 + 2;
       } else {
-        // Выбираем стратегию генерации
-        int strategy = _random.nextInt(3);
-        
-        switch (strategy) {
-          case 0:
-            // Генерируем число, которое будет иметь НОД с существующим
-            int baseNumber = existingNumbers[_random.nextInt(existingNumbers.length)];
-            int multiplier = _random.nextInt(4) + 2;
-            currentNumber = baseNumber * multiplier;
-            break;
-            
-          case 1:
-            // Генерируем взаимно простое число
-            currentNumber = _random.nextInt(17) + 2;
-            while (existingNumbers.any((n) => _findGCD(n, currentNumber!) > 1)) {
-              currentNumber = _random.nextInt(17) + 2;
-            }
-            break;
-            
-          case 2:
-            // Генерируем произведение двух небольших чисел
-            currentNumber = (_random.nextInt(5) + 2) * (_random.nextInt(5) + 2);
-            break;
-        }
+        newNumber = (_random.nextInt(3) + 2) * (_random.nextInt(3) + 2);
+      }
+    } else {
+      int strategy = _random.nextInt(4);
+      
+      switch (strategy) {
+        case 0:
+          int baseNumber = existingNumbers[_random.nextInt(existingNumbers.length)];
+          int multiplier = _random.nextInt(4) + 2;
+          newNumber = baseNumber * multiplier;
+          break;
+          
+        case 1:
+          newNumber = _random.nextInt(17) + 2;
+          int attempts = 0;
+          while (existingNumbers.any((n) => _findGCD(n, newNumber) > 1) && attempts < 10) {
+            newNumber = _random.nextInt(17) + 2;
+            attempts++;
+          }
+          break;
+          
+        case 2:
+          newNumber = (_random.nextInt(5) + 2) * (_random.nextInt(5) + 2);
+          break;
 
-        // Ограничиваем максимальное значение
-        if (currentNumber! > 100) {
-          currentNumber = currentNumber! % 20 + 2;
+        case 3:
+          newNumber = _random.nextInt(20) + 2;
+          int attempts = 0;
+          while (!existingNumbers.any((n) => _findGCD(n, newNumber) > 1) && attempts < 10) {
+            newNumber = _random.nextInt(20) + 2;
+            attempts++;
+          }
+          break;
+
+        default:
+          newNumber = _random.nextInt(17) + 2;
+      }
+
+      if (newNumber > 100) {
+        List<int> factors = [];
+        int n = newNumber;
+        for (int i = 2; i <= n; i++) {
+          while (n % i == 0) {
+            factors.add(i);
+            n = n ~/ i;
+          }
+        }
+        if (factors.length >= 2) {
+          factors.shuffle();
+          newNumber = factors[0] * factors[1];
+        } else {
+          newNumber = newNumber % 30 + 2;
         }
       }
-    });
+    }
+
+    currentNumber = newNumber;
   }
 
   int _findGCD(int a, int b) {
@@ -128,6 +155,18 @@ class _GameScreenState extends State<GameScreen> {
   void _processCell(int row, int col, int number) {
     if (grid[row][col] != null || currentNumber == null) return;
 
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastMoveTime < 3000) {
+      _comboMultiplier = min(_comboMultiplier + 1, 5);
+    } else {
+      _comboMultiplier = 1;
+    }
+    _lastMoveTime = now;
+
+    final processedNumber = currentNumber;
+    currentNumber = null;
+    isDragging = false;
+
     setState(() {
       grid[row][col] = number;
       int totalScore = 0;
@@ -135,13 +174,12 @@ class _GameScreenState extends State<GameScreen> {
       int placedNumber = number;
 
       List<Point<int>> neighbors = [
-        Point(row - 1, col), // верх
-        Point(row + 1, col), // низ
-        Point(row, col - 1), // лево
-        Point(row, col + 1), // право
+        Point(row - 1, col),
+        Point(row + 1, col),
+        Point(row, col - 1),
+        Point(row, col + 1),
       ];
 
-      // Сначала проверяем, есть ли взаимодействия
       bool hasAnyInteraction = false;
       for (var point in neighbors) {
         if (point.x >= 0 && point.x < gridSize && 
@@ -155,7 +193,6 @@ class _GameScreenState extends State<GameScreen> {
         }
       }
 
-      // Если есть взаимодействия, обрабатываем их
       if (hasAnyInteraction) {
         for (var point in neighbors) {
           if (point.x >= 0 && point.x < gridSize && 
@@ -166,43 +203,36 @@ class _GameScreenState extends State<GameScreen> {
             
             if (gcd > 1) {
               hadInteraction = true;
-              // Обновляем значение соседа
               int newNeighborValue = neighborValue ~/ gcd;
               if (newNeighborValue > 1) {
-                totalScore += (neighborValue - newNeighborValue);
+                totalScore += (neighborValue - newNeighborValue) * gcd;
                 grid[point.x][point.y] = newNeighborValue;
               } else {
-                totalScore += neighborValue - 1;
+                totalScore += neighborValue * 2;
                 grid[point.x][point.y] = null;
               }
               
-              // Обновляем размещенное число
               int newPlacedNumber = placedNumber ~/ gcd;
               if (newPlacedNumber > 1) {
                 placedNumber = newPlacedNumber;
               } else {
-                placedNumber = 0; // Будет удалено позже
+                placedNumber = 0;
               }
             }
           }
         }
 
-        // Обновляем размещенное число после всех взаимодействий
         if (placedNumber <= 1) {
           grid[row][col] = null;
         } else {
           grid[row][col] = placedNumber;
           totalScore += number - placedNumber;
         }
-      } else {
-        // Если нет взаимодействий, оставляем число как есть
-        grid[row][col] = number;
       }
 
+      totalScore *= _comboMultiplier;
       score += totalScore;
-      currentNumber = null; // Очищаем текущее число после хода
-      
-      // Проверяем окончание игры после всех изменений
+
       if (_isGameOver()) {
         _handleGameOver();
       } else {
@@ -234,6 +264,11 @@ class _GameScreenState extends State<GameScreen> {
           }
         }
       }
+      
+      if (score > 1000) {
+        grid[gridSize ~/ 2][gridSize ~/ 2] = null;
+        return false;
+      }
       return true;
     }
     return false;
@@ -242,9 +277,6 @@ class _GameScreenState extends State<GameScreen> {
   void _handleGameOver() {
     if (!_resultSaved) {
       _resultSaved = true;
-      setState(() {
-        currentNumber = null;
-      });
       _saveResult(score);
     }
   }
@@ -345,7 +377,7 @@ class _GameScreenState extends State<GameScreen> {
                   setDialogState(() {
                     GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
                   });
-                  setState(() {}); // Обновляем основной экран
+                  setState(() {});
                 },
               ),
             );
@@ -378,7 +410,7 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor: const Color(0xFFFAF8EF),
       appBar: AppBar(
         title: const Text(
-          'GCD Game',
+          'Div',
           style: TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
@@ -611,6 +643,23 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                     ),
               const SizedBox(height: 20),
+              if (_comboMultiplier > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8F7A66),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'КОМБО x$_comboMultiplier',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFF9F6F2),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

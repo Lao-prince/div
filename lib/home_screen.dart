@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Column(
                   children: [
                     Text(
-                      'GCD',
+                      'DIV',
                       style: TextStyle(
                         fontSize: 72,
                         fontWeight: FontWeight.bold,
