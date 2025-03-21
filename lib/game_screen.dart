@@ -126,7 +126,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _processCell(int row, int col, int number) {
-    if (grid[row][col] != null) return;
+    if (grid[row][col] != null || currentNumber == null) return;
 
     setState(() {
       grid[row][col] = number;
@@ -200,6 +200,7 @@ class _GameScreenState extends State<GameScreen> {
       }
 
       score += totalScore;
+      currentNumber = null; // Очищаем текущее число после хода
       
       // Проверяем окончание игры после всех изменений
       if (_isGameOver()) {
@@ -322,6 +323,51 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  void _showSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Настройки',
+          style: TextStyle(
+            color: Color(0xFF776E65),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return ListTile(
+              title: const Text('Режим перетаскивания'),
+              trailing: Switch(
+                value: GameSettings.gameMode == GameMode.dragAndDrop,
+                onChanged: (value) {
+                  setDialogState(() {
+                    GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
+                  });
+                  setState(() {}); // Обновляем основной экран
+                },
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Закрыть',
+              style: TextStyle(
+                color: Color(0xFF776E65),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -357,6 +403,14 @@ class _GameScreenState extends State<GameScreen> {
             ),
             onPressed: _initializeGame,
             tooltip: 'Начать заново',
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.settings,
+              color: Color(0xFF776E65),
+            ),
+            onPressed: _showSettings,
+            tooltip: 'Настройки',
           ),
         ],
       ),
@@ -454,7 +508,8 @@ class _GameScreenState extends State<GameScreen> {
                             onTap: GameSettings.gameMode == GameMode.tap && currentNumber != null
                                 ? () => _processCell(row, col, currentNumber!)
                                 : null,
-                            canAcceptDrop: grid[row][col] == null,
+                            canAcceptDrop: grid[row][col] == null && 
+                                (GameSettings.gameMode == GameMode.dragAndDrop || currentNumber != null),
                             currentNumber: currentNumber,
                           ),
                         );

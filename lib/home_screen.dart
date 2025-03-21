@@ -16,13 +16,6 @@ class _HomeScreenState extends State<HomeScreen> {
     GameSettings.loadSettings();
   }
 
-  void _toggleMusic() {
-    setState(() {
-      GameSettings.isMusicEnabled = !GameSettings.isMusicEnabled;
-      // TODO: Добавить логику включения/выключения музыки
-    });
-  }
-
   void _showSettings() {
     showDialog(
       context: context,
@@ -35,44 +28,29 @@ class _HomeScreenState extends State<HomeScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Режим игры'),
-              subtitle: DropdownButton<GameMode>(
-                value: GameSettings.gameMode,
-                items: const [
-                  DropdownMenuItem(
-                    value: GameMode.dragAndDrop,
-                    child: Text('Перетаскивание'),
-                  ),
-                  DropdownMenuItem(
-                    value: GameMode.tap,
-                    child: Text('Нажатие'),
-                  ),
-                ],
-                onChanged: (GameMode? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      GameSettings.gameMode = newValue;
-                    });
-                    Navigator.pop(context);
-                  }
-                },
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return ListTile(
+              title: Text(
+                GameSettings.gameMode == GameMode.dragAndDrop 
+                    ? 'Режим перетаскивания' 
+                    : 'Режим нажатия',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF776E65),
+                ),
               ),
-            ),
-            ListTile(
-              title: const Text('Музыка'),
               trailing: Switch(
-                value: GameSettings.isMusicEnabled,
+                value: GameSettings.gameMode == GameMode.dragAndDrop,
                 onChanged: (value) {
-                  Navigator.pop(context);
-                  _toggleMusic();
+                  setDialogState(() {
+                    GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
+                  });
+                  setState(() {});
                 },
               ),
-            ),
-          ],
+            );
+          },
         ),
         actions: [
           TextButton(
@@ -100,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Логотип
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -136,7 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 60),
-              // Кнопки
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
@@ -168,44 +144,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _showSettings,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFBBADA0),
-                              foregroundColor: const Color(0xFFF9F6F2),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                              ),
-                            ),
-                            child: const Text(
-                              'НАСТРОЙКИ',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                    ElevatedButton(
+                      onPressed: _showSettings,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFBBADA0),
+                        foregroundColor: const Color(0xFFF9F6F2),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
                         ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: _toggleMusic,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFBBADA0),
-                            foregroundColor: const Color(0xFFF9F6F2),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                          ),
-                          child: Icon(
-                            GameSettings.isMusicEnabled ? Icons.music_note : Icons.music_off,
-                            size: 24,
-                          ),
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text(
+                        'НАСТРОЙКИ',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
