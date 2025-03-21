@@ -242,36 +242,33 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   bool _isGameOver() {
-    if (!grid.any((row) => row.any((cell) => cell == null))) {
-      for (int i = 0; i < gridSize; i++) {
-        for (int j = 0; j < gridSize; j++) {
-          if (grid[i][j] != null) {
-            List<Point<int>> neighbors = [
-              Point(i - 1, j),
-              Point(i + 1, j),
-              Point(i, j - 1),
-              Point(i, j + 1),
-            ];
+    // Если есть пустые клетки, игра продолжается
+    if (grid.any((row) => row.any((cell) => cell == null))) {
+      return false;
+    }
 
-            for (var point in neighbors) {
-              if (point.x >= 0 && point.x < gridSize && 
-                  point.y >= 0 && point.y < gridSize && 
-                  grid[point.x][point.y] != null) {
-                int gcd = _findGCD(grid[i][j]!, grid[point.x][point.y]!);
-                if (gcd > 1) return false;
-              }
-            }
+    // Если поле заполнено, проверяем возможные взаимодействия
+    for (int i = 0; i < gridSize; i++) {
+      for (int j = 0; j < gridSize; j++) {
+        List<Point<int>> neighbors = [
+          Point(i - 1, j),
+          Point(i + 1, j),
+          Point(i, j - 1),
+          Point(i, j + 1),
+        ];
+
+        for (var point in neighbors) {
+          if (point.x >= 0 && point.x < gridSize && 
+              point.y >= 0 && point.y < gridSize) {
+            int gcd = _findGCD(grid[i][j]!, grid[point.x][point.y]!);
+            if (gcd > 1) return false;
           }
         }
       }
-      
-      if (score > 1000) {
-        grid[gridSize ~/ 2][gridSize ~/ 2] = null;
-        return false;
-      }
-      return true;
     }
-    return false;
+    
+    // Если поле заполнено и нет возможных взаимодействий - игра окончена
+    return true;
   }
 
   void _handleGameOver() {
