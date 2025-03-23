@@ -155,18 +155,12 @@ class _GameScreenState extends State<GameScreen> {
   void _processCell(int row, int col, int number) {
     if (grid[row][col] != null || currentNumber == null) return;
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastMoveTime < 3000) {
-      _comboMultiplier = min(_comboMultiplier + 1, 5);
-    } else {
-      _comboMultiplier = 1;
-    }
-    _lastMoveTime = now;
-
+    // Сохраняем и очищаем текущее число
     final processedNumber = currentNumber;
     currentNumber = null;
     isDragging = false;
 
+    // Обрабатываем ход в одном setState
     setState(() {
       grid[row][col] = number;
       int totalScore = 0;
@@ -180,6 +174,7 @@ class _GameScreenState extends State<GameScreen> {
         Point(row, col + 1),
       ];
 
+      // Проверяем взаимодействия
       bool hasAnyInteraction = false;
       for (var point in neighbors) {
         if (point.x >= 0 && point.x < gridSize && 
@@ -193,7 +188,11 @@ class _GameScreenState extends State<GameScreen> {
         }
       }
 
+      // Обрабатываем взаимодействия
       if (hasAnyInteraction) {
+        // Увеличиваем комбо только если есть взаимодействие
+        _comboMultiplier = min(_comboMultiplier + 1, 5);
+        
         for (var point in neighbors) {
           if (point.x >= 0 && point.x < gridSize && 
               point.y >= 0 && point.y < gridSize && 
@@ -228,11 +227,17 @@ class _GameScreenState extends State<GameScreen> {
           grid[row][col] = placedNumber;
           totalScore += number - placedNumber;
         }
+      } else {
+        // Сбрасываем комбо, если нет взаимодействий
+        _comboMultiplier = 1;
+        grid[row][col] = number;
       }
 
+      // Применяем множитель комбо к очкам
       totalScore *= _comboMultiplier;
       score += totalScore;
 
+      // Проверяем окончание игры
       if (_isGameOver()) {
         _handleGameOver();
       } else {
@@ -459,13 +464,27 @@ class _GameScreenState extends State<GameScreen> {
                   children: [
                     Column(
                       children: [
-                        const Text(
-                          'СЧЕТ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFEEE4DA),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'СЧЕТ',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFEEE4DA),
+                              ),
+                            ),
+                            if (score > _bestScore)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  Icons.star,
+                                  color: Color(0xFFFFD700), // Золотой цвет
+                                  size: 16,
+                                ),
+                              ),
+                          ],
                         ),
                         Text(
                           score.toString(),
@@ -581,6 +600,34 @@ class _GameScreenState extends State<GameScreen> {
                           color: Color(0xFFF9F6F2),
                         ),
                       ),
+                      if (score > _bestScore) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Color(0xFFFFD700),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Новый рекорд!',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFFD700),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.star,
+                              color: Color(0xFFFFD700),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _initializeGame,
@@ -611,17 +658,17 @@ class _GameScreenState extends State<GameScreen> {
                       onDragEnd: () => setState(() => isDragging = false),
                     )
                   : Container(
-                      width: 72,
-                      height: 72,
+                      width: 96,
+                      height: 96,
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF8F7A66),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 3,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -631,7 +678,7 @@ class _GameScreenState extends State<GameScreen> {
                           child: Text(
                             currentNumber.toString(),
                             style: const TextStyle(
-                              fontSize: 32,
+                              fontSize: 48,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),

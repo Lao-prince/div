@@ -38,17 +38,17 @@ class DraggableNumber extends StatelessWidget {
 
   Widget _buildTile() {
     return Container(
-      width: 72,
-      height: 72,
+      width: 96,
+      height: 96,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: _getBackgroundColor(),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -58,7 +58,7 @@ class DraggableNumber extends StatelessWidget {
           child: Text(
             number.toString(),
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 48,
               fontWeight: FontWeight.bold,
               color: _getTextColor(),
             ),
