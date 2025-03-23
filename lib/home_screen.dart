@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(
-          'Настройки',
+          'Settings',
           style: TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
@@ -33,8 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
             return ListTile(
               title: Text(
                 GameSettings.gameMode == GameMode.dragAndDrop 
-                    ? 'Режим перетаскивания' 
-                    : 'Режим нажатия',
+                    ? 'Drag & Drop Mode' 
+                    : 'Tap Mode',
                 style: const TextStyle(
                   fontSize: 16,
                   color: Color(0xFF776E65),
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
-              'Закрыть',
+              'Close',
               style: TextStyle(
                 color: Color(0xFF776E65),
                 fontSize: 16,
@@ -216,11 +216,157 @@ class _HomeScreenState extends State<HomeScreen> {
                             elevation: 4,
                           ),
                           child: const Text(
-                            'НАЧАТЬ ИГРУ',
+                            'START GAME',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text(
+                                  'How to Play',
+                                  style: TextStyle(
+                                    color: Color(0xFF776E65),
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Game Rules:',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF776E65),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        '1. Place numbers on the grid, interacting with adjacent cells\n'
+                                        '2. If adjacent numbers have a common divisor greater than 1, they interact\n'
+                                        '3. During interaction, numbers are divided by their greatest common divisor\n'
+                                        '4. If the division result equals 1, the cell is cleared\n'
+                                        '5. Points are awarded for each interaction\n'
+                                        '6. Consecutive interactions create combos (up to x5)\n'
+                                        '7. Game ends when the grid is full and no interactions are possible',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color(0xFF776E65),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Example:',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF776E65),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFFEEE4DA),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                _buildExampleCell('12'),
+                                                const SizedBox(width: 8),
+                                                _buildExampleCell('8'),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              '↓ GCD = 4 ↓',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Color(0xFF776E65),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                _buildExampleCell('3'),
+                                                const SizedBox(width: 8),
+                                                _buildExampleCell('2'),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Game Modes:',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF776E65),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        '• Tap Mode: select a cell to place a number\n'
+                                        '• Drag & Drop Mode: drag the number to the desired cell',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Color(0xFF776E65),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text(
+                                      'Got it',
+                                      style: TextStyle(
+                                        color: Color(0xFF776E65),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFBBADA0),
+                            foregroundColor: const Color(0xFFF9F6F2),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 4,
+                          ),
+                          child: const Text(
+                            'HOW TO PLAY',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
                             ),
                           ),
                         ),
@@ -240,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             elevation: 4,
                           ),
                           child: const Text(
-                            'НАСТРОЙКИ',
+                            'SETTINGS',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -256,6 +402,27 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExampleCell(String number) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFF8F7A66),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Center(
+        child: Text(
+          number,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

@@ -306,7 +306,7 @@ class _GameScreenState extends State<GameScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(
-          'Предыдущие результаты',
+          'Game History',
           style: TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
@@ -322,18 +322,18 @@ class _GameScreenState extends State<GameScreen> {
               final result = previousResults[index];
               return ListTile(
                 title: Text(
-                  'Счет: ${result.score}',
+                  'Score: ${result.score}',
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
                     color: Color(0xFF776E65),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 subtitle: Text(
-                  '${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year} '
-                  '${result.dateTime.hour}:${result.dateTime.minute.toString().padLeft(2, '0')}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
+                  'Date: ${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year}',
+                  style: const TextStyle(
+                    color: Color(0xFF776E65),
+                    fontSize: 14,
                   ),
                 ),
               );
@@ -342,9 +342,9 @@ class _GameScreenState extends State<GameScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.pop(context),
             child: const Text(
-              'Закрыть',
+              'Close',
               style: TextStyle(
                 color: Color(0xFF776E65),
                 fontSize: 16,
@@ -362,7 +362,7 @@ class _GameScreenState extends State<GameScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(
-          'Настройки',
+          'Settings',
           style: TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
@@ -372,7 +372,15 @@ class _GameScreenState extends State<GameScreen> {
         content: StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
             return ListTile(
-              title: const Text('Режим перетаскивания'),
+              title: Text(
+                GameSettings.gameMode == GameMode.dragAndDrop 
+                    ? 'Drag & Drop Mode' 
+                    : 'Tap Mode',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF776E65),
+                ),
+              ),
               trailing: Switch(
                 value: GameSettings.gameMode == GameMode.dragAndDrop,
                 onChanged: (value) {
@@ -389,7 +397,7 @@ class _GameScreenState extends State<GameScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
-              'Закрыть',
+              'Close',
               style: TextStyle(
                 color: Color(0xFF776E65),
                 fontSize: 16,
@@ -402,6 +410,21 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Color _getComboColor(int multiplier) {
+    switch (multiplier) {
+      case 2:
+        return const Color(0xFF90A4AE); // Светло-серый с синим оттенком
+      case 3:
+        return const Color(0xFF78909C); // Серый с синим оттенком
+      case 4:
+        return const Color(0xFF546E7A); // Тёмно-серый с синим оттенком
+      case 5:
+        return const Color(0xFF455A64); // Глубокий серо-синий
+      default:
+        return const Color(0xFF8F7A66);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -412,7 +435,7 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor: const Color(0xFFFAF8EF),
       appBar: AppBar(
         title: const Text(
-          'Div',
+          'DIV GAME',
           style: TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
@@ -428,7 +451,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Color(0xFF776E65),
             ),
             onPressed: _showResults,
-            tooltip: 'История игр',
+            tooltip: 'HISTORY',
           ),
           IconButton(
             icon: const Icon(
@@ -436,7 +459,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Color(0xFF776E65),
             ),
             onPressed: _initializeGame,
-            tooltip: 'Начать заново',
+            tooltip: 'PLAY AGAIN',
           ),
           IconButton(
             icon: const Icon(
@@ -444,7 +467,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Color(0xFF776E65),
             ),
             onPressed: _showSettings,
-            tooltip: 'Настройки',
+            tooltip: 'Settings',
           ),
         ],
       ),
@@ -468,7 +491,7 @@ class _GameScreenState extends State<GameScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text(
-                              'СЧЕТ',
+                              'SCORE',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -504,7 +527,7 @@ class _GameScreenState extends State<GameScreen> {
                     Column(
                       children: [
                         const Text(
-                          'РЕКОРД',
+                          'BEST',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -585,19 +608,19 @@ class _GameScreenState extends State<GameScreen> {
                   child: Column(
                     children: [
                       const Text(
-                        'Игра окончена!',
+                        'GAME OVER',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFF9F6F2),
+                          color: Color(0xFF776E65),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Итоговый счет: $score',
+                        'Final Score: $score',
                         style: const TextStyle(
-                          fontSize: 20,
-                          color: Color(0xFFF9F6F2),
+                          fontSize: 18,
+                          color: Color(0xFF776E65),
                         ),
                       ),
                       if (score > _bestScore) ...[
@@ -612,9 +635,9 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              'Новый рекорд!',
+                              'NEW RECORD!',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFFFD700),
                               ),
@@ -640,7 +663,7 @@ class _GameScreenState extends State<GameScreen> {
                           ),
                         ),
                         child: const Text(
-                          'Начать заново',
+                          'PLAY AGAIN',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -688,21 +711,72 @@ class _GameScreenState extends State<GameScreen> {
                     ),
               const SizedBox(height: 20),
               if (_comboMultiplier > 1)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  margin: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8F7A66),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'КОМБО x$_comboMultiplier',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFF9F6F2),
-                    ),
-                  ),
+                TweenAnimationBuilder(
+                  tween: Tween<double>(begin: 0.8, end: _comboMultiplier == 5 ? 1.1 : 1.0),
+                  duration: const Duration(milliseconds: 300),
+                  builder: (context, double scale, child) {
+                    return Transform.scale(
+                      scale: scale,
+                      child: Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: const EdgeInsets.only(top: 8),
+                            decoration: BoxDecoration(
+                              color: _getComboColor(_comboMultiplier).withOpacity(0.1),
+                              border: Border.all(
+                                color: _getComboColor(_comboMultiplier),
+                                width: 1.5,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'COMBO ',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: _getComboColor(_comboMultiplier),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                Text(
+                                  'x$_comboMultiplier',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: _getComboColor(_comboMultiplier),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_comboMultiplier == 5)
+                            Positioned(
+                              top: 0,
+                              right: -4,
+                              child: TweenAnimationBuilder(
+                                tween: Tween<double>(begin: 0.8, end: 1.2),
+                                duration: const Duration(milliseconds: 600),
+                                builder: (context, double scale, child) {
+                                  return Transform.scale(
+                                    scale: scale,
+                                    child: const Icon(
+                                      Icons.local_fire_department,
+                                      color: Color(0xFFFF5722),
+                                      size: 16,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
             ],
           ),
