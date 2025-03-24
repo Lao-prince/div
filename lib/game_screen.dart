@@ -6,6 +6,7 @@ import 'game_cell.dart';
 import 'draggable_number.dart';
 import 'game_result.dart';
 import 'game_settings.dart';
+import 'app_localizations.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -40,11 +41,49 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _loadPreviousResults() async {
     final prefs = await SharedPreferences.getInstance();
     final resultsJson = prefs.getStringList(_resultsKey) ?? [];
+    
+    // Загружаем все результаты
+    List<GameResult> allResults = resultsJson
+        .map((json) => GameResult.fromJson(jsonDecode(json)))
+        .toList();
+
+    if (allResults.isEmpty) {
+      setState(() {
+        previousResults = [];
+      });
+      return;
+    }
+
+    // Находим лучший результат
+    GameResult bestResult = allResults.reduce((curr, next) => 
+      curr.score > next.score ? curr : next
+    );
+
+    // Получаем дату неделю назад
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+
+    // Фильтруем результаты
+    allResults = allResults.where((result) => 
+      result.dateTime.isAfter(weekAgo)
+    ).toList();
+
+    // Проверяем, есть ли лучший результат в отфильтрованном списке
+    if (!allResults.any((r) => r.score == bestResult.score)) {
+      // Если лучшего результата нет в списке за неделю, добавляем его
+      allResults.add(bestResult);
+    }
+
+    // Сортируем результаты
+    allResults.sort((a, b) {
+      // Если один из результатов является лучшим, он должен быть первым
+      if (a.score == bestResult.score) return -1;
+      if (b.score == bestResult.score) return 1;
+      // Иначе сортируем по дате
+      return b.dateTime.compareTo(a.dateTime);
+    });
+
     setState(() {
-      previousResults = resultsJson
-          .map((json) => GameResult.fromJson(jsonDecode(json)))
-          .toList()
-        ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+      previousResults = allResults;
     });
   }
 
@@ -334,10 +373,36 @@ class _GameScreenState extends State<GameScreen> {
       dateTime: DateTime.now(),
     );
     
+    // Добавляем новый результат в начало списка
     previousResults.insert(0, result);
-    if (previousResults.length > _maxStoredResults) {
-      previousResults.removeLast();
+
+    // Находим лучший результат
+    GameResult bestResult = previousResults.reduce((curr, next) => 
+      curr.score > next.score ? curr : next
+    );
+
+    // Получаем дату неделю назад
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+
+    // Фильтруем результаты: оставляем только за последнюю неделю
+    previousResults = previousResults.where((result) => 
+      result.dateTime.isAfter(weekAgo)
+    ).toList();
+
+    // Проверяем, есть ли лучший результат в отфильтрованном списке
+    if (!previousResults.any((r) => r.score == bestResult.score)) {
+      // Если лучшего результата нет в списке за неделю, добавляем его
+      previousResults.add(bestResult);
     }
+
+    // Сортируем результаты по дате (сначала новые)
+    previousResults.sort((a, b) {
+      // Если один из результатов является лучшим, он должен быть первым
+      if (a.score == bestResult.score) return -1;
+      if (b.score == bestResult.score) return 1;
+      // Иначе сортируем по дате
+      return b.dateTime.compareTo(a.dateTime);
+    });
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
@@ -356,9 +421,9 @@ class _GameScreenState extends State<GameScreen> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Game History',
-              style: TextStyle(
+            Text(
+              AppLocalizations.gameTitle,
+              style: const TextStyle(
                 color: Color(0xFF776E65),
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -433,7 +498,7 @@ class _GameScreenState extends State<GameScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Score: ${result.score}',
+                                '${AppLocalizations.score}: ${result.score}',
                                 style: TextStyle(
                                   color: const Color(0xFFF9F6F2),
                                   fontSize: isBestScore ? 18 : 16,
@@ -442,7 +507,7 @@ class _GameScreenState extends State<GameScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Date: ${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year}',
+                                '${AppLocalizations.date}: ${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year}',
                                 style: TextStyle(
                                   color: const Color(0xFFF9F6F2).withOpacity(0.7),
                                   fontSize: 14,
@@ -483,71 +548,6 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  void _showSettings() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        titlePadding: const EdgeInsets.fromLTRB(24, 24, 8, 0),
-        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Settings',
-              style: TextStyle(
-                color: Color(0xFF776E65),
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(
-                Icons.close,
-                color: Color(0xFF776E65),
-                size: 24,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 24,
-            ),
-          ],
-        ),
-        content: StatefulBuilder(
-          builder: (BuildContext context, StateSetter setDialogState) {
-            return Container(
-              width: double.maxFinite,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    GameSettings.gameMode == GameMode.dragAndDrop 
-                        ? 'Drag & Drop Mode' 
-                        : 'Tap Mode',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF776E65),
-                    ),
-                  ),
-                  Switch(
-                    value: GameSettings.gameMode == GameMode.dragAndDrop,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
-                      });
-                      setState(() {});
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: const [],
-      ),
-    );
-  }
-
   Color _getComboColor(int multiplier) {
     switch (multiplier) {
       case 2:
@@ -572,9 +572,9 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8EF),
       appBar: AppBar(
-        title: const Text(
-          'DIV GAME',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.gameTitle,
+          style: const TextStyle(
             color: Color(0xFF776E65),
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -589,7 +589,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Color(0xFF776E65),
             ),
             onPressed: _showResults,
-            tooltip: 'HISTORY',
+            tooltip: AppLocalizations.history,
           ),
           IconButton(
             icon: const Icon(
@@ -597,15 +597,7 @@ class _GameScreenState extends State<GameScreen> {
               color: Color(0xFF776E65),
             ),
             onPressed: _initializeGame,
-            tooltip: 'PLAY AGAIN',
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: Color(0xFF776E65),
-            ),
-            onPressed: _showSettings,
-            tooltip: 'Settings',
+            tooltip: AppLocalizations.playAgain,
           ),
         ],
       ),
@@ -628,9 +620,9 @@ class _GameScreenState extends State<GameScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'SCORE',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.score,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFEEE4DA),
@@ -681,9 +673,9 @@ class _GameScreenState extends State<GameScreen> {
                               size: 16,
                             ),
                             const SizedBox(width: 4),
-                            const Text(
-                              'BEST',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.best,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFEEE4DA),
@@ -764,9 +756,9 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'GAME OVER',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.gameOver,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF776E65),
@@ -774,7 +766,7 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Final Score: $score',
+                        '${AppLocalizations.finalScore}: $score',
                         style: const TextStyle(
                           fontSize: 18,
                           color: Color(0xFF776E65),
@@ -791,9 +783,9 @@ class _GameScreenState extends State<GameScreen> {
                               size: 20,
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'NEW RECORD!',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.newRecord,
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFFFD700),
@@ -819,9 +811,9 @@ class _GameScreenState extends State<GameScreen> {
                             vertical: 16,
                           ),
                         ),
-                        child: const Text(
-                          'PLAY AGAIN',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.playAgain,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
