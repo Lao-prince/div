@@ -155,17 +155,14 @@ class _GameScreenState extends State<GameScreen> {
   void _processCell(int row, int col, int number) {
     if (grid[row][col] != null || currentNumber == null) return;
 
-    // Сохраняем и очищаем текущее число
     final processedNumber = currentNumber;
     currentNumber = null;
     isDragging = false;
 
-    // Обрабатываем ход в одном setState
     setState(() {
       grid[row][col] = number;
       int totalScore = 0;
       bool hadInteraction = false;
-      int placedNumber = number;
 
       List<Point<int>> neighbors = [
         Point(row - 1, col),
@@ -174,61 +171,109 @@ class _GameScreenState extends State<GameScreen> {
         Point(row, col + 1),
       ];
 
-      // Проверяем взаимодействия
-      bool hasAnyInteraction = false;
+      // Собираем все взаимодействия
+      List<Map<String, dynamic>> interactions = [];
+      
       for (var point in neighbors) {
         if (point.x >= 0 && point.x < gridSize && 
             point.y >= 0 && point.y < gridSize && 
             grid[point.x][point.y] != null) {
           int neighborValue = grid[point.x][point.y]!;
-          if (_findGCD(placedNumber, neighborValue) > 1) {
-            hasAnyInteraction = true;
-            break;
+          int gcd = _findGCD(number, neighborValue);
+          if (gcd > 1) {
+            interactions.add({
+              'point': point,
+              'value': neighborValue,
+              'gcd': gcd,
+            });
           }
         }
       }
 
-      // Обрабатываем взаимодействия
-      if (hasAnyInteraction) {
-        // Увеличиваем комбо только если есть взаимодействие
+      // Если есть взаимодействия
+      if (interactions.isNotEmpty) {
+        hadInteraction = true;
         _comboMultiplier = min(_comboMultiplier + 1, 5);
+
+        // Группируем взаимодействия по значениям
+        Map<int, List<Map<String, dynamic>>> groupedInteractions = {};
+        for (var interaction in interactions) {
+          int value = interaction['value'] as int;
+          if (!groupedInteractions.containsKey(value)) {
+            groupedInteractions[value] = [];
+          }
+          groupedInteractions[value]!.add(interaction);
+        }
+
+        // Сортируем группы по размеру (сначала группы с большим количеством одинаковых чисел)
+        var sortedGroups = groupedInteractions.entries.toList()
+          ..sort((a, b) => b.value.length.compareTo(a.value.length));
+
+        int placedNumber = number;
         
-        for (var point in neighbors) {
-          if (point.x >= 0 && point.x < gridSize && 
-              point.y >= 0 && point.y < gridSize && 
-              grid[point.x][point.y] != null) {
-            int neighborValue = grid[point.x][point.y]!;
-            int gcd = _findGCD(placedNumber, neighborValue);
-            
-            if (gcd > 1) {
-              hadInteraction = true;
-              int newNeighborValue = neighborValue ~/ gcd;
+        // Обрабатываем каждую группу
+        for (var group in sortedGroups) {
+          var sameNumberInteractions = group.value;
+          
+          if (sameNumberInteractions.length > 1) {
+            // Параллельная обработка для группы одинаковых чисел
+            int groupGcd = sameNumberInteractions[0]['gcd'] as int;
+            int resultNumber = placedNumber;
+            for (var _ in sameNumberInteractions) {
+              resultNumber = resultNumber ~/ groupGcd;
+            }
+
+            // Обрабатываем все числа в группе
+            for (var interaction in sameNumberInteractions) {
+              var point = interaction['point'] as Point<int>;
+              int neighborValue = interaction['value'] as int;
+              
+              int newNeighborValue = neighborValue ~/ groupGcd;
               if (newNeighborValue > 1) {
-                totalScore += (neighborValue - newNeighborValue) * gcd;
+                totalScore += (neighborValue - newNeighborValue) * groupGcd;
                 grid[point.x][point.y] = newNeighborValue;
               } else {
                 totalScore += neighborValue * 2;
                 grid[point.x][point.y] = null;
               }
-              
-              int newPlacedNumber = placedNumber ~/ gcd;
-              if (newPlacedNumber > 1) {
-                placedNumber = newPlacedNumber;
-              } else {
-                placedNumber = 0;
-              }
+            }
+
+            placedNumber = resultNumber;
+            if (placedNumber <= 1) {
+              grid[row][col] = null;
+              totalScore += number;
+              break;
+            }
+          } else {
+            // Последовательная обработка для одиночных чисел
+            var interaction = sameNumberInteractions[0];
+            var point = interaction['point'] as Point<int>;
+            int neighborValue = interaction['value'] as int;
+            int gcd = interaction['gcd'] as int;
+
+            int newNeighborValue = neighborValue ~/ gcd;
+            if (newNeighborValue > 1) {
+              totalScore += (neighborValue - newNeighborValue) * gcd;
+              grid[point.x][point.y] = newNeighborValue;
+            } else {
+              totalScore += neighborValue * 2;
+              grid[point.x][point.y] = null;
+            }
+
+            placedNumber = placedNumber ~/ gcd;
+            if (placedNumber <= 1) {
+              grid[row][col] = null;
+              totalScore += number;
+              break;
             }
           }
         }
 
-        if (placedNumber <= 1) {
-          grid[row][col] = null;
-        } else {
+        if (placedNumber > 1) {
           grid[row][col] = placedNumber;
           totalScore += number - placedNumber;
         }
       } else {
-        // Сбрасываем комбо, если нет взаимодействий
         _comboMultiplier = 1;
         grid[row][col] = number;
       }
