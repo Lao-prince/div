@@ -305,54 +305,135 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(
-          'Game History',
-          style: TextStyle(
-            color: Color(0xFF776E65),
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: previousResults.length,
-            itemBuilder: (context, index) {
-              final result = previousResults[index];
-              return ListTile(
-                title: Text(
-                  'Score: ${result.score}',
-                  style: const TextStyle(
-                    color: Color(0xFF776E65),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  'Date: ${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year}',
-                  style: const TextStyle(
-                    color: Color(0xFF776E65),
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Close',
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 8, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        backgroundColor: const Color(0xFFFAF8EF),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Game History',
               style: TextStyle(
                 color: Color(0xFF776E65),
-                fontSize: 16,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(
+                Icons.close,
+                color: Color(0xFF776E65),
+                size: 24,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 24,
+            ),
+          ],
+        ),
+        content: Container(
+          width: double.maxFinite,
+          height: 300,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFAF8EF),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ],
+          child: RawScrollbar(
+            thumbColor: const Color(0xFF776E65).withOpacity(0.5),
+            radius: const Radius.circular(8),
+            thickness: 6,
+            thumbVisibility: true,
+            child: ListView.builder(
+              padding: const EdgeInsets.only(top: 8, bottom: 8, right: 12),
+              itemCount: previousResults.length,
+              itemBuilder: (context, index) {
+                final result = previousResults[index];
+                final isBestScore = result.score == _bestScore;
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBBADA0),
+                    borderRadius: BorderRadius.circular(8),
+                    border: isBestScore ? Border.all(
+                      color: const Color(0xFFFFD700),
+                      width: 2,
+                    ) : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: isBestScore 
+                            ? const Color(0xFFFFD700).withOpacity(0.2)
+                            : Colors.black.withOpacity(0.05),
+                        blurRadius: isBestScore ? 4 : 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          if (isBestScore)
+                            const Padding(
+                              padding: EdgeInsets.only(right: 12),
+                              child: Icon(
+                                Icons.emoji_events,
+                                color: Color(0xFFFFD700),
+                                size: 24,
+                              ),
+                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Score: ${result.score}',
+                                style: TextStyle(
+                                  color: const Color(0xFFF9F6F2),
+                                  fontSize: isBestScore ? 18 : 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Date: ${result.dateTime.day}.${result.dateTime.month}.${result.dateTime.year}',
+                                style: TextStyle(
+                                  color: const Color(0xFFF9F6F2).withOpacity(0.7),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      if (isBestScore)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFD700).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'BEST',
+                            style: TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        actions: const [],
       ),
     );
   }
@@ -361,51 +442,63 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            color: Color(0xFF776E65),
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 8, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Settings',
+              style: TextStyle(
+                color: Color(0xFF776E65),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(
+                Icons.close,
+                color: Color(0xFF776E65),
+                size: 24,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              splashRadius: 24,
+            ),
+          ],
         ),
         content: StatefulBuilder(
           builder: (BuildContext context, StateSetter setDialogState) {
-            return ListTile(
-              title: Text(
-                GameSettings.gameMode == GameMode.dragAndDrop 
-                    ? 'Drag & Drop Mode' 
-                    : 'Tap Mode',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF776E65),
-                ),
-              ),
-              trailing: Switch(
-                value: GameSettings.gameMode == GameMode.dragAndDrop,
-                onChanged: (value) {
-                  setDialogState(() {
-                    GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
-                  });
-                  setState(() {});
-                },
+            return Container(
+              width: double.maxFinite,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    GameSettings.gameMode == GameMode.dragAndDrop 
+                        ? 'Drag & Drop Mode' 
+                        : 'Tap Mode',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF776E65),
+                    ),
+                  ),
+                  Switch(
+                    value: GameSettings.gameMode == GameMode.dragAndDrop,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        GameSettings.gameMode = value ? GameMode.dragAndDrop : GameMode.tap;
+                      });
+                      setState(() {});
+                    },
+                  ),
+                ],
               ),
             );
           },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Close',
-              style: TextStyle(
-                color: Color(0xFF776E65),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        actions: const [],
       ),
     );
   }
@@ -502,19 +595,28 @@ class _GameScreenState extends State<GameScreen> {
                               const Padding(
                                 padding: EdgeInsets.only(left: 4),
                                 child: Icon(
-                                  Icons.star,
-                                  color: Color(0xFFFFD700), // Золотой цвет
-                                  size: 16,
+                                  Icons.emoji_events,
+                                  color: Color(0xFFFFD700),
+                                  size: 20,
                                 ),
                               ),
                           ],
                         ),
                         Text(
                           score.toString(),
-                          style: const TextStyle(
-                            fontSize: 24,
+                          style: TextStyle(
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFF9F6F2),
+                            color: score > _bestScore 
+                                ? const Color(0xFFFFD700) 
+                                : const Color(0xFFF9F6F2),
+                            shadows: score > _bestScore ? [
+                              Shadow(
+                                color: const Color(0xFFFFD700).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ] : null,
                           ),
                         ),
                       ],
@@ -522,17 +624,27 @@ class _GameScreenState extends State<GameScreen> {
                     Container(
                       width: 2,
                       height: 40,
-                      color: Color(0xFFEEE4DA),
+                      color: const Color(0xFFEEE4DA),
                     ),
                     Column(
                       children: [
-                        const Text(
-                          'BEST',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFEEE4DA),
-                          ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events,
+                              color: Color(0xFFFFD700),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'BEST',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFEEE4DA),
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           _bestScore.toString(),
